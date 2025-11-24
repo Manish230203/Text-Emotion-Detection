@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Emotion Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" type="text/css" href="static/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container-nav">
+            <span class="navbar-title">MoodAI</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;">Text Emotion Prediction</h1>
+        <h3>Predict Emotions in Text</h3>
+        <form id="emotion-form" action="/predict" method="POST">
+            <textarea id="text-input" name="text" placeholder="Enter Text Here"></textarea>
+            <button type="submit">Predict Emotion</button>
+        </form>
+        <div id="result-container"></div>
+
+        <!-- Button to show/hide the graph -->
+        <button id="show-graph-btn" style="display: none;">Show Graph</button>
+
+        <!-- Graph container -->
+        <div id="graph-container" style="display: none;">
+            <canvas id="emotion-chart"></canvas>
+            <button id="close-graph-btn">Close</button>
+        </div>
+    </div>
+    <script src="static/script.js"></script>
+</body>
+</html>

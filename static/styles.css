@@ -1,0 +1,131 @@
+/* Navbar styles */
+body{
+    margin: 0;
+    padding: 0;
+    background-color: #e7ffe4;
+}
+.navbar {
+    background-color: #9dd895; /* Blue color scheme */
+    color: #fff; 
+    
+    padding: 0px !important;
+}
+
+ .container-nav {
+    display: flex;
+    align-items: center;
+    font-family:cursive;
+    justify-content: flex-start;
+    padding: 10px ;
+}
+
+.navbar-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+    padding-left: 50px;
+}
+
+.container {
+    margin: 30px auto;
+    max-width: 60vw;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    border: 1px solid rgb(211, 211, 211);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+h1{
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    text-align: center;
+}
+h3 {
+    text-align: center;
+    color: #333;
+}
+
+#emotion-form {
+    margin-bottom: 20px;
+}
+
+#text-input {
+    width: 95%;
+    height: 100px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: transparent;
+    color: lightgreen;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid lightgreen;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    
+}
+
+button:hover {
+    background-color: lightgreen;
+    color: white;
+    border: rgb(1, 72, 1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#result-container {
+
+    margin: 20px 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Result container styles */
+#result-container {
+    display: none; /* Initially hide the result container */
+}
+
+/* Styles for showing the result container */
+#result-container.show-result {
+    display: block; /* Show the result container */
+    margin-top: 20px; /* Add some top margin */
+    padding: 20px; /* Add padding to create space around the content */
+    border: 2px solid #007bff; /* Add a border with a blue color */
+    border-radius: 5px; /* Add rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow for depth */
+}
+
+/* Heading styles */
+#result-container.show-result h3 {
+    text-align: left;
+    font-size: 20px; /* Increase font size for headings */
+    color: #007bff; /* Use blue color for headings */
+    margin-bottom: 10px; /* Add some bottom margin to headings */
+}
+
+/* Text paragraph styles */
+#result-container.show-result p {
+    font-size: 16px; /* Set font size for paragraphs */
+    line-height: 1.5; /* Set line height for better readability */
+}
+
+#close-graph-btn {
+    display: block;
+    margin: 20px auto 0;
+}
+
+
+#graph-container {
+    
+    margin-top: 20px;
+}
+
+canvas {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
