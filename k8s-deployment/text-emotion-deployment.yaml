@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-emotion-detection-deployment
+  namespace: 2401199
+  labels:
+    app: text-emotion-detection
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: text-emotion-detection
+  template:
+    metadata:
+      labels:
+        app: text-emotion-detection
+    spec:
+      containers:
+        - name: text-emotion-detection
+          image: nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ajinkya-project/text-emotion-detection:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            # Add any env vars your app needs here
+            # - name: ENV
+            #   value: "prod"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-emotion-detection-service
+  namespace: 2401199
+  labels:
+    app: text-emotion-detection
+spec:
+  type: NodePort   # or ClusterIP / LoadBalancer as per your cluster setup
+  selector:
+    app: text-emotion-detection
+  ports:
+    - name: http
+      port: 80         # service port inside cluster
+      targetPort: 5000 # container port
+      nodePort: 32001  # external node port (only if type: NodePort)
