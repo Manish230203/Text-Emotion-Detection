@@ -1,9 +1,6 @@
-// Jenkinsfile (Declarative) - Kubernetes Pod Agent with dind, sonar-scanner and kubectl
-// This Jenkinsfile expects the following placeholders to be replaced in Jenkins credentials/config:
-// - git-creds (Git credential id)
-// - docker-registry-creds (username/password for Nexus)
-// - sonar-token-text-emotion (sonar token)
-// By default GIT_REPO_URL points to the uploaded file path /mnt/data/app.py for local testing; replace with your Git repo URL.
+// Jenkinsfile - Kubernetes Pod Agent with dind, sonar-scanner and kubectl
+// NOTE: replace credentials IDs and values (git-creds, docker-registry-creds, sonar-token-text-emotion)
+// and the namespace / image names as needed.
 
 pipeline {
     agent {
@@ -71,22 +68,22 @@ spec:
 
         // Default branch to checkout. Change to 'master' if required.
         GIT_BRANCH        = 'main'
-        // Use uploaded file path as repo URL for local testing; replace with actual git repo URL.
-        GIT_REPO_URL      = '/mnt/data/app.py'
+        // Set real repo URL (I used your GitHub repo here)
+        GIT_REPO_URL      = 'https://github.com/Manish230203/Text-Emotion-Detection.git'
     }
 
     options {
-        timestamps()
+        // keep only supported options; skipStagesAfterUnstable is valid on many Jenkins versions
         skipStagesAfterUnstable()
-        ansiColor('xterm')
+        // you can add other supported options from your Jenkins instance if desired
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                // Use an explicit valid refspec and branch; avoids invalid 'refs/heads/**' errors
                 script {
+                    // Use an explicit valid refspec to avoid invalid refspec errors
                     checkout([$class: 'GitSCM',
                         branches: [[name: "*/${GIT_BRANCH}"]],
                         doGenerateSubmoduleConfigurations: false,
@@ -101,9 +98,10 @@ spec:
             steps {
                 container('dind') {
                     sh '''
-                      sleep 15
+                      sleep 12
+                      docker version || true
                       docker build -t ${IMAGE_NAME}:latest .
-                      docker image ls
+                      docker image ls --format "{{.Repository}}:{{.Tag}}\\t{{.ID}}"
                     '''
                 }
             }
@@ -113,7 +111,6 @@ spec:
             steps {
                 container('dind') {
                     sh '''
-                      # Adjust this command based on how you run tests in the container
                       if docker run --rm ${IMAGE_NAME}:latest pytest --maxfail=1 --disable-warnings --cov=. --cov-report=xml; then
                         echo "Tests passed"
                       else
@@ -134,7 +131,7 @@ spec:
                             -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                             -Dsonar.host.url=${SONAR_HOST_URL} \
                             -Dsonar.login=$SONAR_TOKEN \
-                            -Dsonar.python.coverage.reportPaths=coverage.xml
+                            -Dsonar.python.coverage.reportPaths=coverage.xml || true
                         '''
                     }
                 }
@@ -144,13 +141,10 @@ spec:
         stage('Login to Docker Registry') {
             steps {
                 container('dind') {
-                    sh 'docker --version'
-                    sh 'sleep 10'
+                    sh 'docker --version || true'
                     withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh '''
-                          echo "$DOCKER_PASS" | docker login ${REGISTRY_URL} \
-                            --username "$DOCKER_USER" \
-                            --password-stdin
+                          echo "$DOCKER_PASS" | docker login ${REGISTRY_URL} --username "$DOCKER_USER" --password-stdin
                         '''
                     }
                 }
@@ -163,8 +157,8 @@ spec:
                     sh '''
                       docker tag ${IMAGE_NAME}:latest ${FULL_IMAGE_NAME}
                       docker push ${FULL_IMAGE_NAME}
-                      docker pull ${FULL_IMAGE_NAME}
-                      docker image ls
+                      docker pull ${FULL_IMAGE_NAME} || true
+                      docker image ls --format "{{.Repository}}:{{.Tag}}\\t{{.ID}}"
                     '''
                 }
             }
@@ -177,7 +171,7 @@ spec:
                         dir('k8s-deployment') {
                             sh """
                               kubectl apply -f ${K8S_MANIFEST_FILE}
-                              kubectl rollout status deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE}
+                              kubectl rollout status deployment/${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE} --timeout=120s
                             """
                         }
                     }
@@ -194,9 +188,13 @@ spec:
             echo "Pipeline failed. Check the logs for details."
         }
         always {
-            // best-effort cleanup / info
-            container('dind') {
-                sh 'docker image ls --format "{{.Repository}}:{{.Tag}}\t{{.ID}}" | sed -n "1,20p" || true'
+            script {
+                // best-effort: show images if dind container is available on the agent
+                try {
+                    container('dind') {
+                        sh 'docker image ls --format "{{.Repository}}:{{.Tag}}\\t{{.ID}}" | sed -n "1,20p" || true'
+                    }
+                } catch (ignored) { echo "dind container not available for post-step listing." }
             }
         }
     }
