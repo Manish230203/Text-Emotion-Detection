@@ -1,3 +1,9 @@
+# Updated Kubernetes Deployment + Service for text-emotion-detection
+# Notes:
+# - I inspected your local app at /mnt/data/app.py when preparing this manifest.
+# - Change imagePullSecrets.name to match the secret you create for your Nexus registry.
+# - Adjust resources, replicas, and namespace to match your cluster policies.
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,8 +11,14 @@ metadata:
   namespace: 2401096
   labels:
     app: text-emotion-detection
+    component: backend
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
     matchLabels:
       app: text-emotion-detection
@@ -14,7 +26,10 @@ spec:
     metadata:
       labels:
         app: text-emotion-detection
+        component: backend
     spec:
+      imagePullSecrets:
+        - name: nexus-registry-secret   # <--- create this Secret (docker-registry) for your Nexus registry
       containers:
         - name: text-emotion-detection
           image: nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ajinkya-project/text-emotion-detection:v1
@@ -24,24 +39,55 @@ spec:
           env:
             - name: MODEL_PATH
               value: /app/model/text_emotion.pkl
+            - name: LOG_LEVEL
+              value: INFO
+            - name: PORT
+              value: "5000"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
               path: /health
               port: 5000
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
           livenessProbe:
             httpGet:
               path: /health
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+          # Optional: mount a ConfigMap or Secret if needed (uncomment and create accordingly)
+          # volumeMounts:
+          #   - name: model-volume
+          #     mountPath: /app/model
+      # Optional volumes (uncomment if you use them)
+      # volumes:
+      #   - name: model-volume
+      #     persistentVolumeClaim:
+      #       claimName: text-emotion-model-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: text-emotion-service
   namespace: 2401096
+  labels:
+    app: text-emotion-detection
 spec:
   selector:
     app: text-emotion-detection
@@ -50,3 +96,15 @@ spec:
       port: 80
       targetPort: 5000
   type: ClusterIP
+
+# Optional: If you want external access (LoadBalancer / NodePort), replace Service type and add annotations
+# Example for LoadBalancer (cloud provider):
+# spec:
+#   type: LoadBalancer
+#   ports:
+#     - protocol: TCP
+#       port: 80
+#       targetPort: 5000
+#   selector:
+#     app: text-emotion-detection
+# And add needed annotations for your cloud LB provider.
