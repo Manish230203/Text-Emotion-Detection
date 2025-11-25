@@ -1,3 +1,10 @@
+// Jenkinsfile (Declarative) - Kubernetes Pod Agent with dind, sonar-scanner and kubectl
+// This Jenkinsfile expects the following placeholders to be replaced in Jenkins credentials/config:
+// - git-creds (Git credential id)
+// - docker-registry-creds (username/password for Nexus)
+// - sonar-token-text-emotion (sonar token)
+// By default GIT_REPO_URL points to the uploaded file path /mnt/data/app.py for local testing; replace with your Git repo URL.
+
 pipeline {
     agent {
         kubernetes {
@@ -61,9 +68,34 @@ spec:
         K8S_NAMESPACE     = "2401096"
         K8S_DEPLOYMENT    = "text-emotion-detection-deployment"
         K8S_MANIFEST_FILE = "text-emotion-deployment.yaml"
+
+        // Default branch to checkout. Change to 'master' if required.
+        GIT_BRANCH        = 'main'
+        // Use uploaded file path as repo URL for local testing; replace with actual git repo URL.
+        GIT_REPO_URL      = '/mnt/data/app.py'
+    }
+
+    options {
+        timestamps()
+        skipStagesAfterUnstable()
+        ansiColor('xterm')
     }
 
     stages {
+
+        stage('Checkout') {
+            steps {
+                // Use an explicit valid refspec and branch; avoids invalid 'refs/heads/**' errors
+                script {
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "*/${GIT_BRANCH}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        userRemoteConfigs: [[url: GIT_REPO_URL, credentialsId: 'git-creds', refspec: '+refs/heads/*:refs/remotes/origin/*']]
+                    ])
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
@@ -150,6 +182,21 @@ spec:
                         }
                     }
                 }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully. Image: ${FULL_IMAGE_NAME}"
+        }
+        failure {
+            echo "Pipeline failed. Check the logs for details."
+        }
+        always {
+            // best-effort cleanup / info
+            container('dind') {
+                sh 'docker image ls --format "{{.Repository}}:{{.Tag}}\t{{.ID}}" | sed -n "1,20p" || true'
             }
         }
     }

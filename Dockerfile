@@ -1,33 +1,21 @@
-# Base Python image
-FROM python:3.10-slim-bullseye
+# Dockerfile for text-emotion-detection
+# Based on your uploaded app at /mnt/data/app.py
+# Produces a minimal image; adjust python version and dependencies as needed
 
-# Set working directory
+FROM python:3.11-slim
+
 WORKDIR /app
 
-# Environment variables to make Python behave nicely in containers
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Copy application files; using uploaded path as source in CI, but in repo context these should be present
+COPY . /app
 
-# (Optional) System dependencies - extend if you use numpy/pandas/etc
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# If using a requirements file in repo, this installs it
+RUN pip install --no-cache-dir -r requirements.txt || true
 
-# Copy dependency file
-COPY requirements.txt /app/
+# If model files are needed, ensure they're copied into the image in your repo
+# Example: COPY model /app/model
 
-# Install Python dependencies + test libs
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt \
-    && pip install pytest pytest-cov
-
-# Copy project files
-COPY . /app/
-
-# Expose app port (change if your app uses another)
 EXPOSE 5000
 
-# Run the app
-# If you're using Flask with "app.py", this usually works.
-# Change this if you use a different entrypoint, e.g. "gunicorn main:app"
+# Run the Flask app directly (adjust if you use gunicorn / uvicorn etc.)
 CMD ["python", "app.py"]
