@@ -58,7 +58,7 @@ spec:
 
         SONAR_HOST_URL    = "http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000"
         SONAR_PROJECT_KEY = "text_emotion_detection_project"
-        K8S_NAMESPACE     = "2401199"
+        K8S_NAMESPACE     = "2401096"
         K8S_DEPLOYMENT    = "text-emotion-detection-deployment"
         K8S_MANIFEST_FILE = "text-emotion-deployment.yaml"
     }
