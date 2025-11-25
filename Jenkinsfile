@@ -50,7 +50,7 @@ spec:
           name: workspace-volume
 
     - name: git
-      image: alpine/git:2.40.0
+      image: bitnami/git:latest
       command: ["cat"]
       tty: true
       volumeMounts:
@@ -89,7 +89,7 @@ spec:
   }
 
   environment {
-    // NOTE: developer instruction: using uploaded file path as the url (change to real git URL if needed)
+    // URL points to the uploaded local path (tool will transform path -> url). Replace with remote git URL if needed.
     GIT_REPO_URL      = '/mnt/data/app.py'
     GIT_BRANCH        = 'main' // change to 'master' if your repo uses master
     IMAGE_NAME        = "text-emotion-detection"

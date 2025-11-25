@@ -1,21 +1,21 @@
 # Dockerfile for text-emotion-detection
-# Based on your uploaded app at /mnt/data/app.py
-# Produces a minimal image; adjust python version and dependencies as needed
+# Builds a minimal image that runs app.py (Flask app assumed)
 
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy application files; using uploaded path as source in CI, but in repo context these should be present
+# Copy application files into image
 COPY . /app
 
-# If using a requirements file in repo, this installs it
-RUN pip install --no-cache-dir -r requirements.txt || true
+# Install dependencies if requirements.txt exists
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
-# If model files are needed, ensure they're copied into the image in your repo
-# Example: COPY model /app/model
+# Ensure model folder exists (if you copy model into repo)
+# COPY model /app/model
 
 EXPOSE 5000
 
-# Run the Flask app directly (adjust if you use gunicorn / uvicorn etc.)
+# Use a production WSGI server if desired (gunicorn recommended). Default: run app.py directly.
+# For production, consider: CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
 CMD ["python", "app.py"]

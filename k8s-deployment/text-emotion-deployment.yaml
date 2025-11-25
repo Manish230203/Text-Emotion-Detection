@@ -1,9 +1,3 @@
-# Updated Kubernetes Deployment + Service for text-emotion-detection
-# Notes:
-# - I inspected your local app at /mnt/data/app.py when preparing this manifest.
-# - Change imagePullSecrets.name to match the secret you create for your Nexus registry.
-# - Adjust resources, replicas, and namespace to match your cluster policies.
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,7 +23,7 @@ spec:
         component: backend
     spec:
       imagePullSecrets:
-        - name: nexus-registry-secret   # <--- create this Secret (docker-registry) for your Nexus registry
+        - name: nexus-registry-secret   # create this secret for your Nexus registry
       containers:
         - name: text-emotion-detection
           image: nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ajinkya-project/text-emotion-detection:v1
@@ -71,15 +65,6 @@ spec:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
             runAsUser: 1000
-          # Optional: mount a ConfigMap or Secret if needed (uncomment and create accordingly)
-          # volumeMounts:
-          #   - name: model-volume
-          #     mountPath: /app/model
-      # Optional volumes (uncomment if you use them)
-      # volumes:
-      #   - name: model-volume
-      #     persistentVolumeClaim:
-      #       claimName: text-emotion-model-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -96,15 +81,3 @@ spec:
       port: 80
       targetPort: 5000
   type: ClusterIP
-
-# Optional: If you want external access (LoadBalancer / NodePort), replace Service type and add annotations
-# Example for LoadBalancer (cloud provider):
-# spec:
-#   type: LoadBalancer
-#   ports:
-#     - protocol: TCP
-#       port: 80
-#       targetPort: 5000
-#   selector:
-#     app: text-emotion-detection
-# And add needed annotations for your cloud LB provider.
