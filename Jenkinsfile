@@ -117,7 +117,7 @@ spec:
                                 kubectl apply -f text-emotion-deployment.yaml
 
                                 # Wait for rollout
-                                kubectl rollout status deployment/face-detection-deployment -n 2401096
+                                kubectl rollout status deployment/text-emotion-deployment -n 2401096
                             '''
                         }
                         }
