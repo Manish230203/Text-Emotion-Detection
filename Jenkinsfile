@@ -112,16 +112,14 @@ spec:
                     container('kubectl') {
                         script {
                                 dir('k8s-deployment') {
-                                withEnv(['K8S_NAMESPACE=2401096', 'FULL_IMAGE=nexus.../text-emotion-detection:latest']) {
-                                sh '''
-                                    sed -i.bak "s/2401096/$K8S_NAMESPACE/g" text-emotion-deployment.yaml || true
-                                    kubectl apply -f text-emotion-deployment.yaml -n "$K8S_NAMESPACE"
-                                    kubectl -n "$K8S_NAMESPACE" set image deployment/text-emotion-detection-deployment \
-                                        text-emotion-detection="$FULL_IMAGE" --record || true
-                                    kubectl -n "$K8S_NAMESPACE" rollout status deployment/text-emotion-detection-deployment --timeout=120s
-                                    '''
-                                }
-                            }   
+                            sh '''
+                                # Apply all resources in deployment YAML
+                                kubectl apply -f text-emotion-deployment.yaml
+
+                                # Wait for rollout
+                                kubectl rollout status deployment/face-detection-deployment -n 2401096
+                            '''
+                        }
                         }
                     }
                 }
