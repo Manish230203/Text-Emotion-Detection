@@ -42,7 +42,7 @@ spec:
     spec:
       # imagePullSecrets for private registry access (create this secret in the namespace)
       imagePullSecrets:
-        - name: nexus-registry-secret
+        - name: nexus-secret
       containers:
         - name: text-emotion-detection
           # <<< REPLACE this with your actual image >>>
@@ -146,7 +146,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: text-emotion.imcc.com     # REPLACE with your host (DNS must point to ingress controller)
+    - host: textemotion.imcc.com     # REPLACE with your host (DNS must point to ingress controller)
       http:
         paths:
           - path: /
