@@ -28,13 +28,13 @@ for desc, importer in candidates:
         import_errors.append((desc, repr(e)))
 
 if preprocess_text is None:
-    # None of the expected imports worked — skip these tests with details for debugging
+    # None of the expected imports worked — skip entire module (allowed at module level)
     msg = "Could not import preprocess_text from expected locations. Tried:\n"
     for desc, err in import_errors:
         msg += f"- {desc}: {err}\n"
-    pytest.skip(msg)
+    pytest.skip(msg, allow_module_level=True)
 
-# Now actual tests (these assume preprocess_text returns a string or similar)
+# --- Actual tests (run only if preprocess_text was found) ---
 def test_preprocess_basic():
     txt = "Hello!!! This is GREAT :)"
     out = preprocess_text(txt)
