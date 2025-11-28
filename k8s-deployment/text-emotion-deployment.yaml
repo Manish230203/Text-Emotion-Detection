@@ -25,7 +25,7 @@ metadata:
     app: text-emotion-detection
     component: backend
 spec:
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
