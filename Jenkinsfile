@@ -112,13 +112,15 @@ spec:
                 container('kubectl') {
                     script {
                         dir('k8s-deployment') {
-                            sh '''
-                                # Apply all resources in deployment YAML
+                            sh 
+                                Apply all resources in deployment YAML
                                 kubectl apply -f text-emotion-deployment.yaml
 
-                                # Wait for rollout
+                                Wait for rollout
                                 kubectl rollout status deployment/text-emotion-deployment -n 2401096
-                            '''
+
+                                
+                            
                         }
                     }
                 }
