@@ -46,7 +46,7 @@ spec:
       containers:
         - name: text-emotion-detection
           # <<< REPLACE this with your actual image >>>
-          image: text-emotion-detection:latest
+          image: 127.0.0.1:30085/2401096-project/text-emotion-detection:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
