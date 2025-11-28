@@ -99,9 +99,9 @@ spec:
         stage('Build - Tag - Push') {
             steps {
                 container('dind') {
-                    sh 'docker tag face-detection:latest nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401199-project/face-detection:latest'
-                    sh 'docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401199-project/face-detection:latest'
-                    sh 'docker pull nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401199-project/face-detection:latest'
+                    sh 'docker tag text-emotion-detection:latest nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401096-project/text-emotion-detection:latest'
+                    sh 'docker push nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401096-project/text-emotion-detection:latest'
+                    sh 'docker pull nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/2401096-project/text-emotion-detection:latest'
                     sh 'docker image ls'
                 }
             }
@@ -114,10 +114,10 @@ spec:
                         dir('k8s-deployment') {
                             sh '''
                                 # Apply all resources in deployment YAML
-                                kubectl apply -f face-detection-deployment.yaml
+                                kubectl apply -f text-emotion-deployment.yaml
 
                                 # Wait for rollout
-                                kubectl rollout status deployment/face-detection-deployment -n 2401199
+                                kubectl rollout status deployment/text-emotion-deployment -n 2401096
                             '''
                         }
                     }

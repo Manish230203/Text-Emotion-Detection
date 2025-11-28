@@ -1,8 +1,26 @@
+# -------------------------------
+# Optional PersistentVolumeClaim (for static files or model files)
+# -------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: text-emotion-static-pvc
+  namespace: "2401096"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# -------------------------------
+# Deployment (Text Emotion Detection)
+# -------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: text-emotion-detection-deployment
-  namespace: 2401096
+  namespace: "2401096"
   labels:
     app: text-emotion-detection
     component: backend
@@ -22,28 +40,32 @@ spec:
         app: text-emotion-detection
         component: backend
     spec:
+      # imagePullSecrets for private registry access (create this secret in the namespace)
       imagePullSecrets:
-        - name: nexus-registry-secret   # create this secret for your Nexus registry
+        - name: nexus-registry-secret
       containers:
         - name: text-emotion-detection
-          image: nexus-service-for-docker-hosted-registry.nexus.svc.cluster.local:8085/ajinkya-project/text-emotion-detection:v1
+          # <<< REPLACE this with your actual image >>>
+          image: text-emotion-detection:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
+
+          # Environment variables for your app
           env:
             - name: MODEL_PATH
-              value: /app/model/text_emotion.pkl
+              value: /app/model/text_emotion.pkl   # adjust if different
             - name: LOG_LEVEL
-              value: INFO
+              value: "INFO"
             - name: PORT
               value: "5000"
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
-            limits:
-              cpu: "1000m"
-              memory: "1Gi"
+            # Example: if you want DB or other secrets, add them similar to the face-detection example:
+            # - name: DB_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: my-db-secret
+            #       key: DB_USER
+
           readinessProbe:
             httpGet:
               path: /health
@@ -53,6 +75,7 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
             successThreshold: 1
+
           livenessProbe:
             httpGet:
               path: /health
@@ -61,16 +84,44 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 5
+
+          # Uncomment this block if you want to mount a PVC with static files or model artifacts.
+          # volumeMounts:
+          #   - name: static-media
+          #     mountPath: /app/static
+          #   - name: model-storage
+          #     mountPath: /app/model
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
             runAsUser: 1000
+
+      # Uncomment / update volumes if you use PVCs for static/model files
+      volumes:
+        - name: static-media
+          persistentVolumeClaim:
+            claimName: text-emotion-static-pvc
+        # - name: model-storage
+        #   persistentVolumeClaim:
+        #     claimName: text-emotion-model-pvc
 ---
+# -------------------------------
+# Service (internal cluster IP)
+# -------------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: text-emotion-service
-  namespace: 2401096
+  namespace: "2401096"
   labels:
     app: text-emotion-detection
 spec:
@@ -81,3 +132,27 @@ spec:
       port: 80
       targetPort: 5000
   type: ClusterIP
+---
+# -------------------------------
+# Ingress (NGINX) - route external host to the service
+# -------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: text-emotion-ingress
+  namespace: "2401096"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: text-emotion.imcc.com     # REPLACE with your host (DNS must point to ingress controller)
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: text-emotion-service
+                port:
+                  number: 80
