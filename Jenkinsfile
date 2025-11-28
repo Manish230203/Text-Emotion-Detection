@@ -108,36 +108,23 @@ spec:
         }
         
         stage('Deploy AI Application') {
-  steps {
-    container('kubectl') {
-      script {
-        dir('k8s-deployment') {
-          sh """
-            # Ensure kubeconfig is mounted at /kube/config by the pod spec (already configured)
-            if [ ! -f /kube/config ]; then
-              echo "ERROR: kubeconfig not found at /kube/config"
-              exit 1
-            fi
-
-            # Replace any hard-coded forbidden namespace (2401096) in the manifests with the allowed one.
-            # This makes the pipeline idempotent even if the YAML contains namespace: 2401096
-            sed -i.bak 's/2401096/${K8S_NAMESPACE}/g' text-emotion-deployment.yaml || true
-
-            # Apply manifests into the allowed namespace
-            kubectl apply -f text-emotion-deployment.yaml -n ${K8S_NAMESPACE}
-
-            # Make sure the deployment uses the image just pushed
-            kubectl -n ${K8S_NAMESPACE} set image deployment/text-emotion-detection-deployment \
-              text-emotion-detection=${FULL_IMAGE} --record
-
-            # Wait for rollout to complete
-            kubectl -n ${K8S_NAMESPACE} rollout status deployment/text-emotion-detection-deployment --timeout=120s
-          """
-        }
-      }
+            steps {
+                    container('kubectl') {
+                        script {
+                                dir('k8s-deployment') {
+                                withEnv(['K8S_NAMESPACE=2401096', 'FULL_IMAGE=nexus.../text-emotion-detection:latest']) {
+                                sh '''
+                                    sed -i.bak "s/2401096/$K8S_NAMESPACE/g" text-emotion-deployment.yaml || true
+                                    kubectl apply -f text-emotion-deployment.yaml -n "$K8S_NAMESPACE"
+                                    kubectl -n "$K8S_NAMESPACE" set image deployment/text-emotion-detection-deployment \
+                                        text-emotion-detection="$FULL_IMAGE" --record || true
+                                    kubectl -n "$K8S_NAMESPACE" rollout status deployment/text-emotion-detection-deployment --timeout=120s
+                                    '''
+                                }
+                            }   
+                        }
+                    }
+                }
+            }
     }
-  }
-}
-
     }
-}
