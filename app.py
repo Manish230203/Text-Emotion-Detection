@@ -50,16 +50,26 @@ emotions_emoji_dict = {
 # --------------------------------------
 def predict_emotions(docx):
     preprocessed = preprocess_text(docx)
+    if model is None:
+        raise RuntimeError("Model not loaded")
     results = model.predict([preprocessed])
+    # convert numpy types to Python native
+    if isinstance(results, np.ndarray):
+        val = results[0]
+        return val.item() if hasattr(val, "item") else val
+    # if list-like
     return results[0]
 
 # --------------------------------------
-# Predict probabilities
+# Predict probabilities (return numpy array)
 # --------------------------------------
 def get_prediction_proba(docx):
     preprocessed = preprocess_text(docx)
+    if model is None:
+        raise RuntimeError("Model not loaded")
     results = model.predict_proba([preprocessed])
-    return results
+    # normalize to numpy array for consistent handling
+    return np.asarray(results)
 
 # --------------------------------------
 # REQUIRED FOR CI + Kubernetes Probes
@@ -86,6 +96,15 @@ def extract_text(raw_data):
         text = parsed_data.get('text', '')
         return text
     except Exception as e:
+        # not JSON — try form-style parsing
+        try:
+            s = raw_data.decode('utf-8')
+            parsed = parse_qs(s)
+            # parse_qs returns lists for values
+            if 'text' in parsed and parsed['text']:
+                return parsed['text'][0]
+        except Exception:
+            pass
         print("Error parsing raw data:", e)
         return ''
 
@@ -102,21 +121,35 @@ def predict():
         print("Input Text:", text)
 
         prediction = predict_emotions(text)
-        probability = get_prediction_proba(text)
+        probability_arr = get_prediction_proba(text)  # numpy array
 
-        max_index = np.argmax(probability)
-        max_probability = probability[0][max_index]
+        # Ensure probability_arr is 2D and has first-row probabilities
+        probability_arr = np.atleast_2d(np.asarray(probability_arr))
+        probability_list = probability_arr.tolist()  # safe Python-native list
+
+        # compute max probability safely
+        try:
+            max_index = int(np.argmax(probability_arr[0]))
+            max_probability = float(probability_arr[0][max_index])
+        except Exception:
+            # fallbacks
+            max_index = 0
+            max_probability = float(probability_list[0][0]) if probability_list and probability_list[0] else 0.0
+
+        # Ensure prediction is native Python type
+        if isinstance(prediction, np.generic):
+            prediction = prediction.item()
 
         return jsonify({
             'text': text,
             'prediction': prediction,
-            'probability': probability.tolist(),
+            'probability': probability_list,
             'max_probability': max_probability
-        })
+        }), 200
 
     except Exception as e:
         print("Error processing prediction:", e)
-        return jsonify({'error': 'An error occurred while processing the prediction'}), 500
+        return jsonify({'error': 'An error occurred while processing the prediction', 'detail': str(e)}), 500
 
 
 # --------------------------------------
