@@ -1,3 +1,14 @@
+# tests/test_app.py (top)
+import os, sys
+
+# compute absolute path to project folder (works whether folder name has spaces)
+proj_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Text Emotion Detection"))
+# if you later rename folder to text_emotion_detection, change the line above to:
+# proj_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "text_emotion_detection"))
+
+# add project folder to import path
+sys.path.insert(0, proj_folder)
+
 import json
 import pytest
 from app import app as flask_app
