@@ -108,23 +108,36 @@ spec:
         }
         
         stage('Deploy AI Application') {
-            steps {
-                container('kubectl') {
-                    script {
-                        dir('k8s-deployment') {
-                            sh '''
-                                Apply all resources in deployment YAML
-                                kubectl apply -f text-emotion-deployment.yaml
+  steps {
+    container('kubectl') {
+      script {
+        dir('k8s-deployment') {
+          sh """
+            # Ensure kubeconfig is mounted at /kube/config by the pod spec (already configured)
+            if [ ! -f /kube/config ]; then
+              echo "ERROR: kubeconfig not found at /kube/config"
+              exit 1
+            fi
 
-                                Wait for rollout
-                                kubectl rollout status deployment/text-emotion-deployment -n 2401096
+            # Replace any hard-coded forbidden namespace (2401096) in the manifests with the allowed one.
+            # This makes the pipeline idempotent even if the YAML contains namespace: 2401096
+            sed -i.bak 's/2401096/${K8S_NAMESPACE}/g' text-emotion-deployment.yaml || true
 
-                                
-                            '''
-                        }
-                    }
-                }
-            }
+            # Apply manifests into the allowed namespace
+            kubectl apply -f text-emotion-deployment.yaml -n ${K8S_NAMESPACE}
+
+            # Make sure the deployment uses the image just pushed
+            kubectl -n ${K8S_NAMESPACE} set image deployment/text-emotion-detection-deployment \
+              text-emotion-detection=${FULL_IMAGE} --record
+
+            # Wait for rollout to complete
+            kubectl -n ${K8S_NAMESPACE} rollout status deployment/text-emotion-detection-deployment --timeout=120s
+          """
         }
+      }
+    }
+  }
+}
+
     }
 }
