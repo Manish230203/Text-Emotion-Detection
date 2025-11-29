@@ -1,5 +1,6 @@
-flask
-joblib
-scikit-learn
+flask>=2.2.0
+gunicorn
 numpy
-pandas
+joblib
+scikit-learn==1.4.1.post1
+# add other dependencies your app uses, e.g. pandas, transformers, etc.

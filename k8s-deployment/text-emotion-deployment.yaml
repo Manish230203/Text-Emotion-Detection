@@ -1,6 +1,3 @@
-# -------------------------------
-# Optional PersistentVolumeClaim (for static files or model files)
-# -------------------------------
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -13,9 +10,6 @@ spec:
     requests:
       storage: 1Gi
 ---
-# -------------------------------
-# Deployment (Text Emotion Detection)
-# -------------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,11 +20,6 @@ metadata:
     component: backend
 spec:
   replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   selector:
     matchLabels:
       app: text-emotion-detection
@@ -40,58 +29,35 @@ spec:
         app: text-emotion-detection
         component: backend
     spec:
-      # imagePullSecrets for private registry access (create this secret in the namespace)
       imagePullSecrets:
         - name: nexus-secret
       containers:
         - name: text-emotion-detection
-          # <<< REPLACE this with your actual image >>>
-          image: 127.0.0.1:30085/2401096-project/text-emotion-detection:latest
+          image: <NEXUS_REGISTRY>/2401096-project/text-emotion-detection:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
-
-          # Environment variables for your app
           env:
             - name: MODEL_PATH
-              value: /app/model/text_emotion.pkl   # adjust if different
+              value: /app/model/text_emotion.pkl
             - name: LOG_LEVEL
               value: "INFO"
             - name: PORT
               value: "5000"
-            # Example: if you want DB or other secrets, add them similar to the face-detection example:
-            # - name: DB_USER
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: my-db-secret
-            #       key: DB_USER
-
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: 5000
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 10
-          #   timeoutSeconds: 3
-          #   failureThreshold: 3
-          #   successThreshold: 1
-
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: 5000
-          #   initialDelaySeconds: 15
-          #   periodSeconds: 20
-          #   timeoutSeconds: 5
-          #   failureThreshold: 5
-
-          # Uncomment this block if you want to mount a PVC with static files or model artifacts.
-          # volumeMounts:
-          #   - name: static-media
-          #     mountPath: /app/static
-          #   - name: model-storage
-          #     mountPath: /app/model
-
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
           resources:
             requests:
               cpu: "250m"
@@ -99,24 +65,15 @@ spec:
             limits:
               cpu: "1000m"
               memory: "1Gi"
-
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
             runAsUser: 1000
-
-      # Uncomment / update volumes if you use PVCs for static/model files
       volumes:
         - name: static-media
           persistentVolumeClaim:
             claimName: text-emotion-static-pvc
-        # - name: model-storage
-        #   persistentVolumeClaim:
-        #     claimName: text-emotion-model-pvc
 ---
-# -------------------------------
-# Service (internal cluster IP)
-# -------------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -133,9 +90,6 @@ spec:
       targetPort: 5000
   type: ClusterIP
 ---
-# -------------------------------
-# Ingress (NGINX) - route external host to the service
-# -------------------------------
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -146,7 +100,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: textemotion.imcc.com     # REPLACE with your host (DNS must point to ingress controller)
+    - host: textemotion.imcc.com  # update to your DNS
       http:
         paths:
           - path: /
