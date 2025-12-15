@@ -78,7 +78,7 @@ spec:
                     withCredentials([string(credentialsId: 'sonar-token-2401096', variable: 'SONAR_TOKEN')]) {
                         sh '''
                             sonar-scanner \
-                                -Dsonar.projectKey=2401096-Manish_Kenjale \
+                                -Dsonar.projectKey=2401096_Text-Emotion-Detection \
                                 -Dsonar.host.url=http://my-sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
                                 -Dsonar.login=$SONAR_TOKEN \
                                 -Dsonar.python.coverage.reportPaths=coverage.xml
