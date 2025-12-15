@@ -37,25 +37,25 @@ spec:
           image: 127.0.0.1:30085/2401096-project/text-emotion-detection:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
           env:
             - name: MODEL_PATH
               value: /app/model/text_emotion.pkl
             - name: LOG_LEVEL
               value: "INFO"
             - name: PORT
-              value: "8000"
+              value: "5000"
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 5000
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 5
@@ -87,8 +87,8 @@ spec:
     app: text-emotion-detection
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
+      port: 5000
+      targetPort: 5000
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
