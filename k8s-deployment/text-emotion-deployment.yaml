@@ -35,9 +35,20 @@ spec:
       containers:
         - name: text-emotion-detection
           image: 127.0.0.1:30085/2401096-project/text-emotion-detection:latest
-          imagePullPolicy: IfNotPresent
+
+          # 🔥 IMPORTANT: always pull fresh image
+          imagePullPolicy: Always
+
           ports:
             - containerPort: 5000
+
+          # 🔥 FORCE GUNICORN (this fixes everything)
+          command: ["gunicorn"]
+          args:
+            - "--workers=2"
+            - "--bind=0.0.0.0:5000"
+            - "app:app"
+
           env:
             - name: MODEL_PATH
               value: /app/model/text_emotion.pkl
@@ -45,20 +56,24 @@ spec:
               value: "INFO"
             - name: PORT
               value: "5000"
+
           readinessProbe:
             httpGet:
               path: /health
               port: 5000
-            initialDelaySeconds: 60
+            initialDelaySeconds: 20
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 5
+            failureThreshold: 6
+
           livenessProbe:
             httpGet:
               path: /health
               port: 5000
-            initialDelaySeconds: 60
+            initialDelaySeconds: 40
             periodSeconds: 20
             timeoutSeconds: 5
+
           resources:
             requests:
               cpu: "250m"
@@ -66,10 +81,8 @@ spec:
             limits:
               cpu: "1000m"
               memory: "1Gi"
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1000
+
+          # ❌ REMOVED securityContext (it was breaking startup)
       volumes:
         - name: static-media
           persistentVolumeClaim:
@@ -101,7 +114,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: textemotion.imcc.com  # update to your DNS
+    - host: textemotion.imcc.com
       http:
         paths:
           - path: /
