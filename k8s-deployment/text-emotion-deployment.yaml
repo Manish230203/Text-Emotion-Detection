@@ -4,6 +4,7 @@ metadata:
   name: text-emotion-static-pvc
   namespace: "2401096"
 spec:
+  storageClassName: local-path
   accessModes:
     - ReadWriteOnce
   resources:
