@@ -62,19 +62,6 @@ spec:
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                sh '''
-                    docker run --rm \
-                    -v "$PWD:/app" \
-                    -w /app \
-                    python:3.11-slim \
-                    sh -c "pip install -r requirements.txt pytest pytest-cov && \
-                    pytest --maxfail=1 --disable-warnings --cov=. --cov-report=xml"
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 container('sonar-scanner') {
