@@ -3,4 +3,7 @@ gunicorn
 numpy
 joblib
 scikit-learn==1.4.1.post1
+pytest
+pytest-cov
+
 # add other dependencies your app uses, e.g. pandas, transformers, etc.
